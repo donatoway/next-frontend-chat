@@ -10,7 +10,7 @@ import io from "socket.io-client";
 
 export const socket = io('http://localhost:3000', {credentials:'include'});
 const name =( "donny");
-const ChatRoom = ('stanza1')
+const ChatRoom = ('stanza3')
 const Password = ('')
 
 export default  function  ({currentChannel = {}, channels = []}) {
@@ -19,18 +19,18 @@ export default  function  ({currentChannel = {}, channels = []}) {
    const handleMessageSend = (newMessage) => {
       setTotalMessages([newMessage, ...totalMessages])
    }
-   const addChannel = () => {
-      console.log("add new channel");
-   }
 
    const joinChannel = () => {
       console.log("join new channel");
    }
 
    const createRoom = async () => {
+      console.log(ChatRoom);
+      console.log(name);
       // const nome = await getUsers();
-       socket.emit('createRoom', {channel: ChatRoom.value, name: name.value, Password: Password.value}, () => {
-         joined.value = true;
+      channels.push(ChatRoom)
+       socket.emit('createRoom', {channel: ChatRoom, name: name, Password: Password}, () => {
+        // joined.value = true;
        }) 
      }
 
@@ -93,3 +93,11 @@ export async function getStaticProps( {params}) {
       revalidate: 10,
    }
 }
+
+/*
+   creare un tipo di dato newChannel che ha dei requisiti di dato
+   per creare un nuovo canale, aggiungere un form che si apre se si clicca
+   su create channel e setta i dati da  mandare a createRoom.
+   Sostituire i dati fittizzi con i dati delle room create nel database.
+   quindi penso di creare un query al database invece di mockChannels
+*/
