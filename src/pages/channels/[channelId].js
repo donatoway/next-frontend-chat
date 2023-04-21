@@ -1,11 +1,17 @@
-import { Flex, Heading, View, useTheme } from "@aws-amplify/ui-react"
+import { Button, Flex, Heading, View, useTheme } from "@aws-amplify/ui-react"
 import { mockChannels, mockMessages } from "../../../mockdata"
 import { ConversationBar } from '../../components/conversationBar'
 import { useState, useEffect } from "react"
 import { MessageList } from "../../components/messages"
 import { MessageItem } from "../../components/messages"
 import { InputArea } from "../../components/InputArea"
+import { ButtonGroup } from "@aws-amplify/ui-react"
+import io from "socket.io-client";
 
+export const socket = io('http://localhost:3000', {credentials:'include'});
+const name =( "donny");
+const ChatRoom = ('stanza1')
+const Password = ('')
 
 export default  function  ({currentChannel = {}, channels = []}) {
    const [totalMessages, setTotalMessages] = useState([])
@@ -13,6 +19,21 @@ export default  function  ({currentChannel = {}, channels = []}) {
    const handleMessageSend = (newMessage) => {
       setTotalMessages([newMessage, ...totalMessages])
    }
+   const addChannel = () => {
+      console.log("add new channel");
+   }
+
+   const joinChannel = () => {
+      console.log("join new channel");
+   }
+
+   const createRoom = async () => {
+      // const nome = await getUsers();
+       socket.emit('createRoom', {channel: ChatRoom.value, name: name.value, Password: Password.value}, () => {
+         joined.value = true;
+       }) 
+     }
+
    useEffect(() => {
      const messages = mockMessages.filter(
         (mckMsg) => mckMsg.channelId == currentChannel.channelId
@@ -38,6 +59,12 @@ export default  function  ({currentChannel = {}, channels = []}) {
                   <InputArea onMessageSend={handleMessageSend} />
               </Flex>
             </View>
+            <Flex direction="column" >
+            <ButtonGroup variant="contained">
+               <Button onClick={createRoom}>add channel</Button>
+               <Button onClick={joinChannel}>join channel</Button>
+            </ButtonGroup>
+            </Flex>
         </Flex>
      </>
      )
