@@ -6,7 +6,7 @@ import {
 	TableRow,
 	View,
 } from '@aws-amplify/ui-react'
-export const ChannelList = ({handleMenuToggle, channels=[]}) => {
+export const ChannelList = ({handleMenuToggle, totalChannels=[]}) => {
     return (
         <View>
             <Table variation="striped" highlightOnHover>
@@ -16,11 +16,11 @@ export const ChannelList = ({handleMenuToggle, channels=[]}) => {
                         </TableRow>
                 </TableHead>
                 <TableBody>
-                    {channels.map((channel) => (
-                        <TableRow key={channel.channelId}
-                        onClick={() => { handleMenuToggle(channel.channelId)}}
+                    {totalChannels.map((channel) => (
+                        <TableRow key={channel.ChannelName}
+                        onClick={() => { handleMenuToggle(channel.ChannelName)}}
                         >
-                        <TableCell>{channel.name}</TableCell>    
+                        <TableCell>{channel.ChannelName}</TableCell>    
                         </TableRow>
                     ))}
                 </TableBody>

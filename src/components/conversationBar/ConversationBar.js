@@ -3,33 +3,33 @@ import { ChannelList } from "../channelList.js"
 import { useState } from 'react'
 import { Flex, Menu, useBreakpointValue } from '@aws-amplify/ui-react'
 
-export const ConversationBar = ({channels = []}) => {
+export const ConversationBar = ({totalChannels = []}) => {
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 	const variation = useBreakpointValue({
 		base: 'isMobile',
 		medium: 'isTabletOrHigher',
 	})
-    const toggleMenu = (channelId) => {
+    const toggleMenu = (ChannelName) => {
         setIsMenuOpen(false);
-        router.push(`/channels/${channelId}`)
+        router.push(`/channels/${ChannelName}`)
     }
-    const ConversationDisplay = ({channels=[]}) => {
+    const ConversationDisplay = ({totalChannels=[]}) => {
         if (variation == 'isMobile') {
             return (
                 <Flex>
                     <Menu isOpen= {isMenuOpen} menuAlign="start" onOpenChanege={() => {
                         setIsMenuOpen(!isMenuOpen)
                     }}>
-                        <ChannelList channels={channels} handleMenuToggle={toggleMenu} />
+                        <ChannelList totalChannels={totalChannels} handleMenuToggle={toggleMenu} />
                     </Menu>
                 </Flex>
             )
         } else if (variation === 'isTabletOrHigher')
         {
-            return <ChannelList channels= {channels} handleMenuToggle={toggleMenu} />
+            return <ChannelList totalChannels= {totalChannels} handleMenuToggle={toggleMenu} />
 
         }
     }
-    return <ConversationDisplay channels={channels} />
+    return <ConversationDisplay totalChannels={totalChannels} />
 }

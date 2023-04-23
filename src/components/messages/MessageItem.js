@@ -4,7 +4,7 @@ export const MessageItem = ({msg = {}}) => {
     const { tokens } = useTheme()
     const myUsername = 'mtliendo'
     const isMyMsg = msg.username == myUsername
-    const isEdited = msg.createdAt != msg.updatedAt
+   // const isEdited = msg.createdAt != msg.updatedAt
     return (
         <Card
             borderRadius={tokens.radii.small}
@@ -32,15 +32,15 @@ export const MessageItem = ({msg = {}}) => {
                                     fontSize={'12px'}
                                     fontWeight="normal"
                                 >
-                                    {msg.createdAt}
+                                    {/*msg.createdAt*/}
                                 </Text>
 					</Heading>
                 </Flex>
                 <Text display={'inline'} color={isMyMsg ? 'white' : 'black'}>
-                    {msg.content}{' '}
+                    {msg.text}{' '}
                 </Text>
                 {
-                    isEdited && (
+                     (
                         <Text
                             as="span"
                             color={isMyMsg ? 'white' : 'black'}

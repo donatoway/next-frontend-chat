@@ -29,10 +29,7 @@ export const InputArea = ({onMessageSend}) => {
                 variation="primary"
                 onClick={ () => {
                     onMessageSend({
-                        id:11,
-                        createAt: 12345,
-                        channelId: 'efg1234',
-                        updatedAt: 2334445,
+                        id:1,
                         username: 'mtliendo',
                         profilePic: 'https://github.com/mtliendo.png',
                         content: messageText
