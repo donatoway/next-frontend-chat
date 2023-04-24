@@ -32,7 +32,7 @@ export const InputArea = (/*{onMessageSend}, */ props ) => {
                    props.onMessageSend({
                         id: props.mex,
                         name: props.user.nickname,
-                        channel: props.user.channel,
+                        channel: props.channel,
                         profilePic: props.user.profilePic,
                         text: messageText
                     })

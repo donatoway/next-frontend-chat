@@ -11,6 +11,7 @@ import io from "socket.io-client";
 import {messageText} from "../../components/InputArea"
 import Box from '@mui/material/Box';
 import { useRouter } from "next/router";
+import { CgOptions } from 'react-icons/cg';
 let counter = 0;
 export const socket = io('http://localhost:3000', {credentials:'include'});
 
@@ -39,12 +40,14 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    const [totalMessages, setTotalMessages] = useState([])
  //  const [messages, setMessages] = useState([]);
    const [showForm, setShowForm] = useState(false);
- //  const [name, setName] = useState('');
+   const [name, setName] = useState('');
    //const [messageText, setMessageText] = useState('');
    const [Password, setPassword] = useState(undefined);
    const [ChatRoom, setChatroom] = useState('');
    const [totalChannels, setTotalChannels] = useState([channels])
-   const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
+   const [user, setUser] = useState({});
+   let temp = "";
+  // const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
    const {tokens} = useTheme()
    const handleMessageSend = (newMessage) => {
       setTotalMessages([newMessage, ...totalMessages])
@@ -64,6 +67,12 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
          // messageText.value = '';
        })
      }
+   
+   const setTempUser = () =>
+   {
+      setUser({nickname: name,  profilePic: 'https://github.com/mtliendo.png'});
+      console.log(user);
+   }
 
    const createRoom = async (event) => {
       event.preventDefault()
@@ -87,6 +96,10 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    }, [currentChannel.ChannelName])
    
    useEffect( () => {
+      const messageInRoom = messages.filter(
+         (message) => message.channel == currentChannel.ChannelName
+      )
+      setTotalMessages(messageInRoom);
       setTotalChannels(channels);
      }, [])
      return (
@@ -105,13 +118,17 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
               </Heading>
               <Flex direction="column" height="85vh">
                   <MessageList messages={totalMessages} /> 
-                  <InputArea onMessageSend={sendMessage} user= {user} mex={counter}/>
+                  <InputArea onMessageSend={sendMessage} user= {user} mex={counter} channel={currentChannel.ChannelName}/>
               </Flex>
             </View>
             <Flex direction="column" >
             <ButtonGroup variant="contained">
                <Button onClick={showFormFunction}>add channel</Button>
                <Button onClick={joinChannel}>join channel</Button>
+               <form>
+                  <TextField id="name" label="" variant="standard" value={name} onChange={e => setName(e.target.value)} />
+                  <Button onClick={setTempUser}>Set user</Button>
+               </form>
             </ButtonGroup>
             
             {showForm &&
@@ -125,6 +142,9 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
                // funzione provvisoria per settare il nome dopo toglierla
 
             }
+            <Button backgroundColor={"#DFFBFF"} opacity={"90%"}>
+            <CgOptions></CgOptions>
+            </Button>
             </Flex>
         </Flex>
      </>
@@ -161,7 +181,10 @@ export async function getStaticProps( {params}) {
 }
 
 /*
-   creare le options;
+   implementare il join e l'if else se l'utente ha joinato o no
+   
+   creare una classe options contenente le varie opzioni
+   di ban, mute, setPassword, setAdmin,
    creare una user-channelList avatar;
    integrare il tutto nel progetto
 */
