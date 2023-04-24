@@ -1,9 +1,10 @@
 import { TextAreaField, View, Flex, Button, TextField } from "@aws-amplify/ui-react"
 import { useState } from "react"
-export const InputArea = ({onMessageSend}) => {
+let i =  1;
+
+export const InputArea = (/*{onMessageSend}, */ props ) => {
     const [messageText, setMessageText] = useState('')
     const [imageName, setImageName] = useState()
-
     return <View
         style={{
             borderTop: '1px solid lightgray',
@@ -28,13 +29,16 @@ export const InputArea = ({onMessageSend}) => {
             <Button
                 variation="primary"
                 onClick={ () => {
-                    onMessageSend({
-                        id:1,
-                        username: 'mtliendo',
-                        profilePic: 'https://github.com/mtliendo.png',
-                        content: messageText
+                   props.onMessageSend({
+                        id: props.mex,
+                        name: props.user.nickname,
+                        channel: props.user.channel,
+                        profilePic: props.user.profilePic,
+                        text: messageText
                     })
+                
                     setMessageText('')
+                    console.log(props.user)
                 }}
             >Send</Button>
             </Flex>

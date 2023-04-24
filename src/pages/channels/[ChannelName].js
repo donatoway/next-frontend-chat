@@ -8,82 +8,85 @@ import { MessageItem } from "../../components/messages"
 import { InputArea } from "../../components/InputArea"
 import { ButtonGroup } from "@aws-amplify/ui-react"
 import io from "socket.io-client";
+import {messageText} from "../../components/InputArea"
 import Box from '@mui/material/Box';
 import { useRouter } from "next/router";
-
-export const socket = io('http://localhoqst:3000', {credentials:'include'});
+let counter = 0;
+export const socket = io('http://localhost:3000', {credentials:'include'});
 
 const getChannels = async () => {
-   const ch = await fetch("http://localhost:3000/messages/channels", {method: 'GET', credentials:'include'})
+//   const ch = await fetch("http://localhost:3000/messages/channels", {method: 'GET', credentials:'include'})
+  // const data = await ch.json();
+ //  return data;
+   let url = "http://localhost:3000/messages/channels";
+   try {
+       let res = await fetch(url);
+       return await res.json();
+   } catch (error) {
+       console.log(error);
+   }
+}
+
+const getAllMessages = async () => {
+   const ch = await fetch("http://localhost:3000/messages/allMessages", {method: 'GET', credentials:'include'})
    const data = await ch.json();
    return data;
 }
 
-export default  function  ({currentChannel = {}, channels = []}) {
+
+
+export default  function  ({currentChannel = {}, channels = [], messages = []}) {
    const [totalMessages, setTotalMessages] = useState([])
+ //  const [messages, setMessages] = useState([]);
    const [showForm, setShowForm] = useState(false);
-   const [name, setName] = useState('');
-   const [messageText, setMessageText] = useState('');
+ //  const [name, setName] = useState('');
+   //const [messageText, setMessageText] = useState('');
    const [Password, setPassword] = useState(undefined);
    const [ChatRoom, setChatroom] = useState('');
    const [totalChannels, setTotalChannels] = useState([channels])
+   const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
    const {tokens} = useTheme()
    const handleMessageSend = (newMessage) => {
       setTotalMessages([newMessage, ...totalMessages])
+      console.log(totalMessages)
    }
-
-    /*  socket.on('message', (message) =>
-      {
-         const msgs = totalMessages.push(message);
-         setTotalMessages(msgs);
-      });
-      */
 
    const joinChannel  = async () => {
-      console.log(await totalChannels);
+     // const mex = await getAllMessages();
+      console.log(messages);
    }
 
-   const sendMessage = async () => {
+   const sendMessage = async (newMessage) => {
       // const nome = await getUsers();
-      setChatroom("stanza1");
-      setName("mimmo");
-      console.log(messageText + " " + ChatRoom +" " + name)
-       socket.emit('createMessage', {text: messageText, channel:ChatRoom, name: name}, () => {
-         messageText.value = '';
+      console.log(newMessage);
+      socket.emit('createMessage', {profilePic: newMessage.profilePic, text: newMessage.text, channel:newMessage.channel, name: newMessage.name, id: counter++}, () => {
+         handleMessageSend(newMessage);
+         // messageText.value = '';
        })
      }
 
    const createRoom = async (event) => {
       event.preventDefault()
-      socket.emit('createRoom', {channel: ChatRoom, name: name, Password: Password}, async () => {
+      socket.emit('createRoom', {channel: ChatRoom, name: user.nickname, Password: Password}, async () => {
         // joined.value = true;
         setTotalChannels(await getChannels());
         setShowForm(false);
-        console.log(ChatRoom + " " + name + " ");
         setChatroom('');
-        setName('');
         setPassword(undefined);
        })
-       //console.log(ChannelForm.ChatRoom.value + " " + ChannelForm.name.value + " ");
-
      }
    const showFormFunction = () => {
       setShowForm(true);
    }
 
    useEffect(() => {
-
-     const messages = mockMessages.filter(
-        (mckMsg) => mckMsg.ChannelName == currentChannel.ChannelName
-     )
-     setTotalMessages(messages)
+      const messageInRoom = messages.filter(
+         (message) => message.channel == currentChannel.ChannelName
+      )
+      setTotalMessages(messageInRoom);
    }, [currentChannel.ChannelName])
-
-   useEffect(() => {
-      // const messages = mockMessages.filter(
-      //    (mckMsg) => mckMsg.channelId == currentChannel.channelId
-       //)
-      // setTotalMessages(messages)
+   
+   useEffect( () => {
       setTotalChannels(channels);
      }, [])
      return (
@@ -102,7 +105,7 @@ export default  function  ({currentChannel = {}, channels = []}) {
               </Heading>
               <Flex direction="column" height="85vh">
                   <MessageList messages={totalMessages} /> 
-                  <InputArea onMessageSend={handleMessageSend} />
+                  <InputArea onMessageSend={sendMessage} user= {user} mex={counter}/>
               </Flex>
             </View>
             <Flex direction="column" >
@@ -113,14 +116,14 @@ export default  function  ({currentChannel = {}, channels = []}) {
             
             {showForm &&
                <div>
-                  {ChatRoom - name}
                   <form onSubmit={createRoom}>
-                     Name:  <TextField id="name" label="ex: donny" variant="standard" value={name} onChange={e => setName(e.target.value)} />
                      Channel:  <TextField id="channel" label="ex: room1" variant="standard" value={ChatRoom} onChange={e => setChatroom(e.target.value)}/>
                      Password :  <TextField id="password" label="ex: password" variant="standard" value={Password} onChange={e => setPassword(e.target.value)} />
                      <Button type="submit">submit</Button>
                   </form>
                </div>
+               // funzione provvisoria per settare il nome dopo toglierla
+
             }
             </Flex>
         </Flex>
@@ -140,8 +143,9 @@ export default  function  ({currentChannel = {}, channels = []}) {
 
 export async function getStaticProps( {params}) {
    //console.log('these are params', params)
-   
    const ch = await getChannels();
+   const mex  = await getAllMessages();
+   mex.reverse();
    const channel = ch.find(
       (channel) => channel.ChannelName == params.ChannelName 
    )
@@ -150,11 +154,14 @@ export async function getStaticProps( {params}) {
          currentChannel:channel,
          channels:ch,
          channels: ch,
+         messages: mex
       },
-      revalidate: 5,
+      revalidate: 10,
    }
 }
 
 /*
-   Collegare  i messaggi: implementare correttamente il send message e aggiornare un message/setMessage
+   creare le options;
+   creare una user-channelList avatar;
+   integrare il tutto nel progetto
 */

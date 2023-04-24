@@ -3,7 +3,7 @@ import { Card, Flex, View, useTheme, Image, Heading, Text } from "@aws-amplify/u
 export const MessageItem = ({msg = {}}) => {
     const { tokens } = useTheme()
     const myUsername = 'mtliendo'
-    const isMyMsg = msg.username == myUsername
+    const isMyMsg = msg.name == myUsername
    // const isEdited = msg.createdAt != msg.updatedAt
     return (
         <Card
@@ -25,7 +25,7 @@ export const MessageItem = ({msg = {}}) => {
             <View>
                 <Flex>
                     <Heading level={5} color={isMyMsg ? 'white' : 'black'}>
-                                {msg.username}{' '}
+                                {msg.name}{' '}
                                 <Text
                                     as="span"
                                     color={isMyMsg ? 'white' : 'black'}
