@@ -1,3 +1,6 @@
+/* eslint-disable import/no-anonymous-default-export */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react/display-name */
 import { Button, Flex, Heading, View, useTheme } from "@aws-amplify/ui-react"
 import { mockChannels, mockMessages } from "../../../mockdata"
 import { ConversationBar } from '../../components/conversationBar'
@@ -40,13 +43,15 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    const [totalMessages, setTotalMessages] = useState([])
  //  const [messages, setMessages] = useState([]);
    const [showForm, setShowForm] = useState(false);
+   const [showJoin, setShowJoin] = useState(false);
    const [name, setName] = useState('');
    //const [messageText, setMessageText] = useState('');
    const [Password, setPassword] = useState(undefined);
    const [ChatRoom, setChatroom] = useState('');
    const [totalChannels, setTotalChannels] = useState([channels])
    const [user, setUser] = useState({});
-   let temp = "";
+   const [roomJoinId, setRoomJoinId] = useState([]);
+
   // const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
    const {tokens} = useTheme()
    const handleMessageSend = (newMessage) => {
@@ -54,10 +59,41 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
       console.log(totalMessages)
    }
 
-   const joinChannel  = async () => {
-     // const mex = await getAllMessages();
-      console.log(messages);
+   const checkJoin = () => 
+   {
+      const chToFind = roomJoinId.find(
+         (ch) => ch.channel == currentChannel.ChannelName
+      )
+      if (chToFind)
+      {
+         return (1);
+         console.log(chToFind);
+      }
+      return null;
    }
+
+   
+
+   const joinChannel = async (event) => {
+      // const nome = await getUsers();
+      event.preventDefault()
+      const channelToJoin= totalChannels.find(
+         (ch) => ch.ChannelName == ChatRoom
+      )
+      if (channelToJoin)
+      {
+         socket.emit('join', {name: user.nickname, channel: ChatRoom, Password: Password}, () =>{
+         setShowJoin(false);
+         const id = {name: user.nickname, channel: ChatRoom}
+         setRoomJoinId([id, ...roomJoinId]);
+         currentChannel.ChannelName = ChatRoom;
+         setPassword(undefined);
+         setChatroom('');
+       })
+      }
+      else
+         console.log("JOIN: channel does not found");
+     }
 
    const sendMessage = async (newMessage) => {
       // const nome = await getUsers();
@@ -75,17 +111,24 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    }
 
    const createRoom = async (event) => {
+      currentChannel.ChannelName = ChatRoom;
       event.preventDefault()
+      currentChannel.ChannelName = ChatRoom;
       socket.emit('createRoom', {channel: ChatRoom, name: user.nickname, Password: Password}, async () => {
         // joined.value = true;
         setTotalChannels(await getChannels());
         setShowForm(false);
-        setChatroom('');
         setPassword(undefined);
+         setChatroom('');
+         setRoomJoinId([{channel: ChatRoom, name: user.nickname}, ...roomJoinId]);
        })
      }
    const showFormFunction = () => {
       setShowForm(true);
+   }
+
+   const showJoinFunction = () => {
+      setShowJoin(true);
    }
 
    useEffect(() => {
@@ -101,52 +144,72 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
       )
       setTotalMessages(messageInRoom);
       setTotalChannels(channels);
-     }, [])
+     }, [/*channels, currentChannel.ChannelName, messages*/])
      return (
      <>
         <Flex direction={{base: 'column', medium:'row'}}>
             < ConversationBar totalChannels={totalChannels} />
-            <View flex={ { base: 0, medium: 1 } }>
-              <Heading
-                 style={{borderBottom: '1px solid black'}}
-                 padding={tokens.space.small}
-                 textAlign={'center'}
-                 level={3}
-                 color={tokens.colors.blue[60]}
-              >
-               {currentChannel.ChannelName}
-              </Heading>
-              <Flex direction="column" height="85vh">
-                  <MessageList messages={totalMessages} /> 
-                  <InputArea onMessageSend={sendMessage} user= {user} mex={counter} channel={currentChannel.ChannelName}/>
-              </Flex>
-            </View>
-            <Flex direction="column" >
-            <ButtonGroup variant="contained">
-               <Button onClick={showFormFunction}>add channel</Button>
-               <Button onClick={joinChannel}>join channel</Button>
-               <form>
-                  <TextField id="name" label="" variant="standard" value={name} onChange={e => setName(e.target.value)} />
-                  <Button onClick={setTempUser}>Set user</Button>
-               </form>
-            </ButtonGroup>
-            
-            {showForm &&
-               <div>
-                  <form onSubmit={createRoom}>
-                     Channel:  <TextField id="channel" label="ex: room1" variant="standard" value={ChatRoom} onChange={e => setChatroom(e.target.value)}/>
-                     Password :  <TextField id="password" label="ex: password" variant="standard" value={Password} onChange={e => setPassword(e.target.value)} />
-                     <Button type="submit">submit</Button>
-                  </form>
-               </div>
-               // funzione provvisoria per settare il nome dopo toglierla
-
+            { checkJoin() == 1 && 
+               <View flex={{ base: 0, medium: 1 }}>
+                    <Heading
+                       style={{ borderBottom: '1px solid black' }}
+                       padding={tokens.space.small}
+                       textAlign={'center'}
+                       level={3}
+                       color={tokens.colors.blue[60]}
+                    >
+                       {currentChannel.ChannelName}
+                    </Heading>
+                    <Flex direction="column" height="85vh">
+                       <MessageList messages={totalMessages} />
+                       <InputArea onMessageSend={sendMessage} user={user} mex={counter} channel={currentChannel.ChannelName} />
+                    </Flex>    
+                 </View>
             }
-            <Button backgroundColor={"#DFFBFF"} opacity={"90%"}>
-            <CgOptions></CgOptions>
-            </Button>
-            </Flex>
+                 <Flex direction="column">
+                       <ButtonGroup variant="contained">
+                          <Button onClick={showFormFunction}>add channel</Button>
+                          <Button onClick={showJoinFunction}>join channel</Button>
+                          <form>
+                             <TextField id="name" label="" variant="standard" value={name} onChange={e => setName(e.target.value)} />
+                             <Button onClick={setTempUser}>Set user</Button>
+                          </form>
+                       </ButtonGroup>
+
+                       {showForm &&
+                          <div>
+                             <form onSubmit={createRoom}>
+                                Channel:  <TextField id="channel" label="ex: room1" variant="standard" value={ChatRoom} onChange={e => setChatroom(e.target.value)} />
+                                Password :  <TextField id="password" label="ex: password" variant="standard" value={Password} onChange={e => setPassword(e.target.value)} />
+                                <Button type="submit">submit</Button>
+                             </form>
+                             {currentChannel.ChannelName = ChatRoom}
+                          </div>
+                          // funzione provvisoria per settare il nome dopo toglierla
+                       }
+                       {showJoin &&
+                          <div>
+                             <form onSubmit={joinChannel}>
+                                Channel:  <TextField id="channel" label="ex: room1" variant="standard" value={ChatRoom} onChange={e => setChatroom(e.target.value)} />
+                                Password :  <TextField id="password" label="ex: password" variant="standard" value={Password} onChange={e => setPassword(e.target.value)} />
+                                <Button type="submit">submit</Button>
+                             </form>
+                          </div>
+                          // funzione provvisoria per settare il nome dopo toglierla
+                       }
+                       <Button backgroundColor={"#DFFBFF"} opacity={"90%"}>
+                          <CgOptions></CgOptions>
+                       </Button>
+                    </Flex>
+            {
+               <div>
+                  name {user.nickname} {"\n"}
+                  channel {currentChannel.ChannelName} {"\n"}
+                  Password {Password} {"\n"}
+               </div>
+            }
         </Flex>
+        
      </>
      )
 }
