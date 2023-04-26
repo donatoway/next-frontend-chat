@@ -11,7 +11,8 @@ export const MessageList = ({ messages = [], myUsername }) => {
 			padding="5px"
 		>
 			{messages.map((msg) => (
-				<MessageItem key={msg.id} msg={msg} />
+				// eslint-disable-next-line react/jsx-key
+				<MessageItem msg={msg} />
 			))}
 		</Flex>
 	)

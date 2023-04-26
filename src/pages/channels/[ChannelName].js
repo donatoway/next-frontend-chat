@@ -6,6 +6,7 @@ import { mockChannels, mockMessages } from "../../../mockdata"
 import { ConversationBar } from '../../components/conversationBar'
 import TextField from '@mui/material/TextField';
 import { useState, useEffect } from "react"
+import { SelectTextFields } from "../../components/inputField";
 import { MessageList } from "../../components/messages"
 import { MessageItem } from "../../components/messages"
 import { InputArea } from "../../components/InputArea"
@@ -15,6 +16,8 @@ import {messageText} from "../../components/InputArea"
 import Box from '@mui/material/Box';
 import { useRouter } from "next/router";
 import { CgOptions } from 'react-icons/cg';
+import { ButtonBase } from "@mui/material";
+import { InputSlider } from "../../components/sliders";
 let counter = 0;
 export const socket = io('http://localhost:3000', {credentials:'include'});
 
@@ -37,6 +40,16 @@ const getAllMessages = async () => {
    return data;
 }
 
+const getPartecipants = async () => {
+   let url = "http://localhost:3000/messages/channels";
+   try {
+       let res = await fetch(url, {method: 'GET', credentials:'include'});
+       return await res.json();
+   } catch (error) {
+       console.log(error);
+   }
+}
+
 
 
 export default  function  ({currentChannel = {}, channels = [], messages = []}) {
@@ -51,12 +64,23 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    const [totalChannels, setTotalChannels] = useState([channels])
    const [user, setUser] = useState({});
    const [roomJoinId, setRoomJoinId] = useState([]);
-
+   const [showOptions, setShowOptions] = useState(false);
+   const [allPartecipants, setAllPartecipants] = useState([]);
+   const [filterPartecipant, setFilterPartecipant] = useState([]);
+   const [select, setSelect] = useState('');
+   const [showBan, setShowBan] = useState(false);
+   const [timer, setTimer] = useState(1);
+   const [onMex, setOnMex] = useState([]);
   // const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
    const {tokens} = useTheme()
+
+      socket.on('message', (message) =>
+      {
+          setTotalMessages([message, ...totalMessages])
+      });
+
    const handleMessageSend = (newMessage) => {
-      setTotalMessages([newMessage, ...totalMessages])
-      console.log(totalMessages)
+     // setTotalMessages([newMessage, ...totalMessages])
    }
 
    const checkJoin = () => 
@@ -70,6 +94,25 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
          console.log(chToFind);
       }
       return null;
+   }
+    
+   const handleClickOpt = async (event) =>
+   {
+      event.preventDefault();
+      setShowOptions(true);
+
+      const ch = [] =  await getChannels()
+      const channel = ch.filter(
+         (obj) => obj.ChannelName == currentChannel.ChannelName
+      )
+      setAllPartecipants(channel.at(0).Partecipant)
+      console.log(allPartecipants);
+   }
+
+   const handleTimer = async (timerFun) =>
+   {
+      setTimer(timerFun);
+      console.log("timer minute : " + timerFun)
    }
 
    
@@ -103,6 +146,25 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
          // messageText.value = '';
        })
      }
+
+     const banUser = async () => {
+      if (select == user.nickname)
+      {
+         console.log("you cannot ban yourself!") ;
+         return
+      }
+      socket.emit('banUser', { channel: currentChannel.ChannelName,
+         userToBan: select,
+         name: user.nickname,
+         timer: timer,
+      }, () => {})
+
+      console.log("banna l utente : " + select + " x un tempo di " + timer + " minuti")
+      setSelect(undefined);
+      setShowBan(false);
+      setShowOptions(false);
+      setTimer(0);
+     }
    
    const setTempUser = () =>
    {
@@ -131,11 +193,19 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
       setShowJoin(true);
    }
 
+   const handleSelect = (selected) => {
+      console.log("hai selezionato : " + selected);
+      setSelect(selected);
+   }
+
    useEffect(() => {
       const messageInRoom = messages.filter(
          (message) => message.channel == currentChannel.ChannelName
       )
+      setShowOptions(false);
       setTotalMessages(messageInRoom);
+      setShowBan(false);
+      setSelect(undefined);
    }, [currentChannel.ChannelName])
    
    useEffect( () => {
@@ -197,9 +267,26 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
                           </div>
                           // funzione provvisoria per settare il nome dopo toglierla
                        }
-                       <Button backgroundColor={"#DFFBFF"} opacity={"90%"}>
-                          <CgOptions></CgOptions>
-                       </Button>
+                       <form onSubmit={handleClickOpt} >
+                           <Button type="sumbit" backgroundColor={"#DFFBFF"} opacity={"90%"} width={"100%"}>
+                              <CgOptions>
+                              </CgOptions>
+                           </Button>
+                       </form>
+                       {
+                              showOptions &&
+                              <Flex>
+                                    <Button onClick={() => setShowBan(true)}>Ban user</Button>
+                                    {
+                                       showBan && 
+                                       <form onSubmit={banUser}>
+                                             User: <SelectTextFields id="user" users={allPartecipants} handleSelect={handleSelect}  ></SelectTextFields>
+                                             Timer: <TextField id="timer" label="time" variant="standard" value={timer} onChange={e => setTimer(e.target.value)} />
+                                             <Button type="submit">set</Button>
+                                       </form>
+                                    }
+                              </Flex>
+                        }
                     </Flex>
             {
                <div>
@@ -209,7 +296,6 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
                </div>
             }
         </Flex>
-        
      </>
      )
 }
@@ -250,4 +336,20 @@ export async function getStaticProps( {params}) {
    di ban, mute, setPassword, setAdmin,
    creare una user-channelList avatar;
    integrare il tutto nel progetto
+*/
+
+/*
+   BAN : 2 input (tempo e nome dello user) ed un invio
+*/
+
+/*
+   non prente il primo utente selezionato capire perche
+*/
+
+
+
+/*-------- TODO ---------------------------
+/*
+   lato backend aggiungere alla funzione banUser sotto socket.leave() aggiungere socket.disconnect(true) per funzionare corretamente
+
 */
