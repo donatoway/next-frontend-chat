@@ -19,6 +19,7 @@ import { CgOptions } from 'react-icons/cg';
 import { ButtonBase } from "@mui/material";
 import { InputSlider } from "../../components/sliders";
 let counter = 0;
+let trig = 0;
 export const socket = io('http://localhost:3000', {credentials:'include'});
 
 const getChannels = async () => {
@@ -50,8 +51,6 @@ const getPartecipants = async () => {
    }
 }
 
-
-
 export default  function  ({currentChannel = {}, channels = [], messages = []}) {
    const [totalMessages, setTotalMessages] = useState([])
  //  const [messages, setMessages] = useState([]);
@@ -69,8 +68,11 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
    const [filterPartecipant, setFilterPartecipant] = useState([]);
    const [select, setSelect] = useState('');
    const [showBan, setShowBan] = useState(false);
+   const [showMute, setShowMute] = useState(false);
    const [timer, setTimer] = useState(1);
    const [onMex, setOnMex] = useState([]);
+   const [showPassword, setShowPassword] = useState(false);
+   const [showAdmin, setShowAdmin] = useState(false);
   // const user = {nickname: "donny", channel: currentChannel.ChannelName, profilePic: 'https://github.com/mtliendo.png'};
    const {tokens} = useTheme()
 
@@ -162,9 +164,61 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
       console.log("banna l utente : " + select + " x un tempo di " + timer + " minuti")
       setSelect(undefined);
       setShowBan(false);
+      setShowPassword(false);
+      setShowMute(false);
       setShowOptions(false);
       setTimer(0);
      }
+
+     const muteUser = async () => {
+
+      socket.emit('muteOn', { channel: currentChannel.ChannelName,
+         useToSilent: select,
+         name: user.nickname,
+         timer: timer,
+      }, () => {})
+      console.log("muteOn l utente : " + select + " x un tempo di " + timer + " minuti")
+      setSelect(undefined);
+      setShowPassword(false);
+      setShowBan(false)
+      setShowMute(false);
+      setShowAdmin(false);
+      setShowOptions(false);
+      setTimer(0);
+   }
+
+   const setPasswordFunction = async () =>
+   {
+      socket.emit('setPassword', { channel: currentChannel.ChannelName,
+         password: Password,
+         name: user.nickname,
+      }, () => {})
+      console.log("l utente : " + user.nickname + "setta la Password : " + Password);
+      setSelect(undefined);
+      setShowAdmin(false);
+      setShowBan(false);
+      setShowMute(false);
+      setShowPassword(false);
+      setShowOptions(false);
+      setPassword(undefined);
+      setTimer(0);
+   }
+
+   const addAdmins = async (event) =>
+   {
+      
+      socket.emit('addAdmin', { channel: currentChannel.ChannelName,
+         userToAdd: select,
+         name: user.nickname,
+      }, () => {})
+      setSelect(undefined);
+      setShowMute(false);
+      setShowBan(false);
+      setShowAdmin(false);
+      setShowPassword(false);
+      setShowOptions(false);
+      setTimer(0);
+   }
    
    const setTempUser = () =>
    {
@@ -276,25 +330,43 @@ export default  function  ({currentChannel = {}, channels = [], messages = []}) 
                        {
                               showOptions &&
                               <Flex>
-                                    <Button onClick={() => setShowBan(true)}>Ban user</Button>
+                                    <Button onClick={() => (setShowBan(true) )}>Ban user</Button>
                                     {
-                                       showBan && 
-                                       <form onSubmit={banUser}>
-                                             User: <SelectTextFields id="user" users={allPartecipants} handleSelect={handleSelect}  ></SelectTextFields>
-                                             Timer: <TextField id="timer" label="time" variant="standard" value={timer} onChange={e => setTimer(e.target.value)} />
-                                             <Button type="submit">set</Button>
-                                       </form>
+                                       showBan &&
+                                          <form onSubmit={banUser}>
+                                                User: <SelectTextFields id="user" users={allPartecipants} handleSelect={handleSelect}  ></SelectTextFields>
+                                                Timer: <TextField id="timer" label="time" variant="standard" value={timer} onChange={e => setTimer(e.target.value)} />
+                                                <Button type="submit">set</Button>
+                                          </form>
+                                    }
+                                    <Button onClick={() => (setShowMute(true)) }>Mute user</Button>
+                                    {
+                                       showMute && 
+                                          <form onSubmit={muteUser}>
+                                                User: <SelectTextFields id="user" users={allPartecipants} handleSelect={handleSelect}  ></SelectTextFields>
+                                                Timer: <TextField id="timer" label="time" variant="standard" value={timer} onChange={e => setTimer(e.target.value)} />
+                                                <Button type="submit">set</Button>
+                                          </form>
+                                    }
+                                    <Button onClick={() => (setShowAdmin(true)) }>add Admin</Button>
+                                    {
+                                       showAdmin && 
+                                          <form onSubmit={addAdmins}>
+                                                User: <SelectTextFields id="user" users={allPartecipants} handleSelect={handleSelect}  ></SelectTextFields>
+                                                <Button type="submit">set</Button>
+                                          </form>
+                                    }
+                                    <Button onClick={() => (setShowPassword(true)) }>set Password</Button>
+                                    {
+                                       showPassword && 
+                                          <form onSubmit={setPasswordFunction}>
+                                               Password :  <TextField id="password" label="ex: password" variant="standard" value={Password} onChange={e => setPassword(e.target.value)} />
+                                                <Button type="submit">set</Button>
+                                          </form>
                                     }
                               </Flex>
                         }
                     </Flex>
-            {
-               <div>
-                  name {user.nickname} {"\n"}
-                  channel {currentChannel.ChannelName} {"\n"}
-                  Password {Password} {"\n"}
-               </div>
-            }
         </Flex>
      </>
      )
@@ -330,26 +402,21 @@ export async function getStaticProps( {params}) {
 }
 
 /*
-   implementare il join e l'if else se l'utente ha joinato o no
-   
-   creare una classe options contenente le varie opzioni
-   di ban, mute, setPassword, setAdmin,
    creare una user-channelList avatar;
    integrare il tutto nel progetto
 */
 
-/*
-   BAN : 2 input (tempo e nome dello user) ed un invio
-*/
 
-/*
-   non prente il primo utente selezionato capire perche
-*/
 
 
 
 /*-------- TODO ---------------------------
 /*
-   lato backend aggiungere alla funzione banUser sotto socket.leave() aggiungere socket.disconnect(true) per funzionare corretamente
-
+BACKEND: 
+1) createMessage: sostiture lo user da trovare con il ban con
+   const isBanned = channel.BanList.find((nick) => nick == user.nickname);
+   e se isBanned allora eseguire il checkBan ed ilresto.
+   Aggiungere il try catch all inizio se il nome non esiste ritorna
+2) creare un SubscribeMessage(addAdmins) che va a richiamare la funzione addAdminToChannel
+   e ricostruirla come nella chiamata api
 */
